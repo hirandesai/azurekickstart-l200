@@ -8,16 +8,31 @@ using System.Web;
 using System.Web.Mvc;
 using AzureKickStart.Models;
 using System.Diagnostics;
+using System.IO;
+using AzureKickStart.Common;
+using System.Threading.Tasks;
 
 namespace AzureKickStart.Controllers
 {
     public class PersonsController : Controller
     {
+        private readonly StorageService storageService;
+        private readonly QueueService queueService;
+
+
+        public PersonsController()
+        {
+            var storageConnectionString = new ConfigurationService().GetConnectionStringValue("StorageConnectionString");
+
+            this.storageService = new StorageService(storageConnectionString);
+            this.queueService = new QueueService(storageConnectionString);
+        }
+
         private MyDatabaseContext db = new MyDatabaseContext();
 
         // GET: Persons
         public ActionResult Index()
-        {            
+        {
             Trace.WriteLine("GET /Person/Index");
             return View(db.Persons.ToList());
         }
@@ -50,13 +65,29 @@ namespace AzureKickStart.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "FullName,BirthDate")] Person person)
+        public async Task<ActionResult> Create([Bind(Include = "FullName,BirthDate")] Person person, HttpPostedFileBase file)
         {
             Trace.WriteLine("POST /Person/Create");
             if (ModelState.IsValid)
             {
-                db.Persons.Add(person);
+                Person peron = db.Persons.Add(person);
                 db.SaveChanges();
+                if (peron != null)
+                {
+                    if (file.ContentLength > 0)
+                    {
+                        string containerName = peron.ID.ToString();
+                        string _FileName = string.Format("{0}_{1}", Guid.NewGuid(), Path.GetFileName(file.FileName));
+                        string fileURL = await storageService.UploadImageToAzureBlobStorageAsync(containerName, _FileName, ConvertToBytes(file), file.ContentType);
+
+                        person.ImageURL = fileURL;
+                        ResizeImageQueueRequest resizeImageQueueRequest = new ResizeImageQueueRequest() { ContainerName = containerName, FileName = _FileName };
+                        await queueService.InsertMessage("resizeimagequeue", resizeImageQueueRequest);
+
+                        db.SaveChanges();
+                    }
+                }
+
                 return RedirectToAction("Index");
             }
 
@@ -131,6 +162,18 @@ namespace AzureKickStart.Controllers
                 db.Dispose();
             }
             base.Dispose(disposing);
+        }
+
+        private static byte[] ConvertToBytes(HttpPostedFileBase file)
+        {
+            int fileSizeInBytes = file.ContentLength;
+            byte[] data = null;
+            using (var br = new BinaryReader(file.InputStream))
+            {
+                data = br.ReadBytes(fileSizeInBytes);
+            }
+
+            return data;
         }
     }
 }

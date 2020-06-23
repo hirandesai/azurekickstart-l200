@@ -219,6 +219,12 @@
       <DependentUpon>202006231029306_Initial.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AzureKickStart.Common\AzureKickStart.Common.csproj">
+      <Project>{195BED8C-FD8D-419C-A601-F1C5A779E34C}</Project>
+      <Name>AzureKickStart.Common</Name>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

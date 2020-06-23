@@ -12,5 +12,8 @@ namespace AzureKickStart.Models
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
         public DateTime BirthDate { get; set; }
+
+        [Display(Name = "Photo")]
+        public string ImageURL { get; set; }
     }
 }
