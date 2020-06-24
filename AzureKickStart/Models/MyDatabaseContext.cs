@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Web;
+using DotNetAppSqlDb.Migrations;
 
 namespace AzureKickStart.Models
 {
@@ -17,6 +18,7 @@ namespace AzureKickStart.Models
     
         public MyDatabaseContext() : base("name=MyDbConnection")
         {
+            Database.SetInitializer<MyDatabaseContext>(new MigrateDatabaseToLatestVersion<MyDatabaseContext, Configuration>());
         }
 
         public System.Data.Entity.DbSet<AzureKickStart.Models.Person> Persons { get; set; }
