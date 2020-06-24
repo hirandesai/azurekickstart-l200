@@ -11,6 +11,11 @@ namespace AzureKickStart.Common
         {
             this.image = image;
         }
+        public class ResizeImageQueueRequest
+        {
+            public string ContainerName { get; set; }
+            public string FileName { get; set; }
+        }
 
         public Bitmap ResizeImage(int width, int height)
         {

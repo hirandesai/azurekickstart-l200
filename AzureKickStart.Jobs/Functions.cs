@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using static AzureKickStart.Common.ImageResizer;
 
 namespace AzureKickStart.Jobs
 {
