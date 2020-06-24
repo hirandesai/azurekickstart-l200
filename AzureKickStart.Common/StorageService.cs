@@ -34,6 +34,9 @@ namespace AzureKickStart.Common
         public async Task<string> UploadImageToAzureBlobStorageAsync(string containerName, string blobName, byte[] bytes, string contentType)
         {
             CloudBlobContainer container = blobClient.GetContainerReference(containerName);
+
+            container.SetPermissions(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
+            await container.CreateIfNotExistsAsync();
             var blockBlob = container.GetBlockBlobReference(blobName);
 
             blockBlob.Properties.ContentType = contentType;

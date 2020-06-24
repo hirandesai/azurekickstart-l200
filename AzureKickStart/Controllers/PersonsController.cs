@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.IO;
 using AzureKickStart.Common;
 using System.Threading.Tasks;
+using System.Data.Entity.SqlServer;
 
 namespace AzureKickStart.Controllers
 {
@@ -34,6 +35,12 @@ namespace AzureKickStart.Controllers
         public ActionResult Index()
         {
             Trace.WriteLine("GET /Person/Index");
+            List<Person> peoples = db.Persons.ToList();
+            peoples.ForEach(q =>
+            {
+                string newFileName = $"{Path.GetDirectoryName(q.ImageURL).Replace(@"http:\", @"http:\\")}\\{Path.GetFileNameWithoutExtension(q.ImageURL)}-{200}x{200}{Path.GetExtension(q.ImageURL)}";
+                q.ImageURL = newFileName;
+            });
             return View(db.Persons.ToList());
         }
 
@@ -70,24 +77,30 @@ namespace AzureKickStart.Controllers
             Trace.WriteLine("POST /Person/Create");
             if (ModelState.IsValid)
             {
-                Person peron = db.Persons.Add(person);
-                db.SaveChanges();
-                if (peron != null)
-                {
-                    if (file.ContentLength > 0)
+                var executionStrategy = new SqlAzureExecutionStrategy();
+
+                await executionStrategy.ExecuteAsync(
+                    async () =>
                     {
-                        string containerName = peron.ID.ToString();
-                        string _FileName = string.Format("{0}_{1}", Guid.NewGuid(), Path.GetFileName(file.FileName));
-                        string fileURL = await storageService.UploadImageToAzureBlobStorageAsync(containerName, _FileName, ConvertToBytes(file), file.ContentType);
-
-                        person.ImageURL = fileURL;
-                        ResizeImageQueueRequest resizeImageQueueRequest = new ResizeImageQueueRequest() { ContainerName = containerName, FileName = _FileName };
-                        await queueService.InsertMessage("resizeimagequeue", resizeImageQueueRequest);
-
+                        Person peron = db.Persons.Add(person);
                         db.SaveChanges();
-                    }
-                }
 
+                        if (file != null && file.ContentLength > 0)
+                        {
+                            string containerName = "profile-images";
+                            string _FileName = string.Format("{0}_{1}_{2}", peron.ID.ToString(), Guid.NewGuid(), Path.GetFileName(file.FileName));
+                            // filename : "2_C44EC313-0E7F-49B7-93E3-B26C90B13E71_myImage.jpg"
+
+                            string fileURL = await storageService.UploadImageToAzureBlobStorageAsync(containerName, _FileName, ConvertToBytes(file), file.ContentType);
+
+                            person.ImageURL = fileURL;
+                            ResizeImageQueueRequest resizeImageQueueRequest = new ResizeImageQueueRequest() { ContainerName = containerName, FileName = _FileName };
+                            await queueService.InsertMessage("resizeimagequeue", resizeImageQueueRequest);
+
+                            db.SaveChanges();
+                        }
+
+                    }, new System.Threading.CancellationToken());
                 return RedirectToAction("Index");
             }
 
