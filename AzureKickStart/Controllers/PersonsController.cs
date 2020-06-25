@@ -36,9 +36,11 @@ namespace AzureKickStart.Controllers
         {
             Trace.WriteLine("GET /Person/Index");
             List<Person> peoples = db.Persons.ToList();
+            ConfigurationService configuration = new ConfigurationService();
+
             peoples.ForEach(q =>
             {
-                string newFileName = $"{Path.GetDirectoryName(q.ImageURL).Replace(@"http:\", @"http:\\")}\\{Path.GetFileNameWithoutExtension(q.ImageURL)}-{200}x{200}{Path.GetExtension(q.ImageURL)}";
+                string newFileName = $"{configuration.GetAppSettingValue<string>("AzureBlobContainerURL")}{Path.GetFileNameWithoutExtension(q.ImageURL)}-{200}x{200}{Path.GetExtension(q.ImageURL)}";
                 q.ImageURL = newFileName;
             });
             return View(db.Persons.ToList());
