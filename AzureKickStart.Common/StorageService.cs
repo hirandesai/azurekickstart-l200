@@ -15,22 +15,6 @@ namespace AzureKickStart.Common
             blobClient = mycloudStorageAccount.CreateCloudBlobClient();
         }
 
-        public async Task<Byte[]> DownloadBlob(string containerName, string file)
-        {
-            CloudBlobContainer container = blobClient.GetContainerReference(containerName);
-            CloudBlockBlob blockBlob = container.GetBlockBlobReference(file);
-
-            await blockBlob.FetchAttributesAsync();
-            long fileByteLength = blockBlob.Properties.Length;
-            byte[] fileContent = new byte[fileByteLength];
-            for (int i = 0; i < fileByteLength; i++)
-            {
-                fileContent[i] = 0x20;
-            }
-            await blockBlob.DownloadToByteArrayAsync(fileContent, 0);
-            return fileContent;
-        }
-
         public async Task<string> UploadImageToAzureBlobStorageAsync(string containerName, string blobName, byte[] bytes, string contentType)
         {
             CloudBlobContainer container = blobClient.GetContainerReference(containerName);
