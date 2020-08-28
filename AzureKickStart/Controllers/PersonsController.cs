@@ -12,6 +12,7 @@ using System.IO;
 using AzureKickStart.Common;
 using System.Threading.Tasks;
 using System.Data.Entity.SqlServer;
+using Microsoft.ApplicationInsights;
 
 namespace AzureKickStart.Controllers
 {
@@ -19,7 +20,7 @@ namespace AzureKickStart.Controllers
     {
         private readonly StorageService storageService;
         private readonly QueueService queueService;
-
+        private TelemetryClient telemetryClient;
 
         public PersonsController()
         {
@@ -27,6 +28,7 @@ namespace AzureKickStart.Controllers
 
             this.storageService = new StorageService(storageConnectionString);
             this.queueService = new QueueService(storageConnectionString);
+            telemetryClient = new TelemetryClient();
         }
 
         private MyDatabaseContext db = new MyDatabaseContext();
@@ -59,6 +61,10 @@ namespace AzureKickStart.Controllers
             {
                 return HttpNotFound();
             }
+            telemetryClient.TrackEvent("User Viewed", new Dictionary<string, string>()
+            {
+                { "Id", id.ToString() },
+            });
             return View(person);
         }
 
@@ -93,6 +99,8 @@ namespace AzureKickStart.Controllers
                     person.ImageURL = fileURL;
                     db.SaveChanges();
 
+                    telemetryClient.Context.User.Id = "Hiren";
+                    telemetryClient.TrackEvent("User Created");
                     ResizeImageQueueRequest resizeImageQueueRequest = new ResizeImageQueueRequest() { ContainerName = containerName, FileName = _FileName };
                     await queueService.InsertMessage("resizeimagequeue", resizeImageQueueRequest);
                 }
