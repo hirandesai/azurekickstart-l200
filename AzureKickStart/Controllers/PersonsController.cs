@@ -38,11 +38,11 @@ namespace AzureKickStart.Controllers
             List<Person> peoples = db.Persons.ToList();
             ConfigurationService configuration = new ConfigurationService();
 
-            peoples.ForEach(q =>
-            {
-                string newFileName = $"{configuration.GetAppSettingValue<string>("AzureBlobContainerURL")}{Path.GetFileNameWithoutExtension(q.ImageURL)}-{200}x{200}{Path.GetExtension(q.ImageURL)}";
-                q.ImageURL = newFileName;
-            });
+            //peoples.ForEach(q =>
+            //{
+            //    string newFileName = $"{configuration.GetAppSettingValue<string>("AzureBlobContainerURL")}{Path.GetFileNameWithoutExtension(q.ImageURL)}-{200}x{200}{Path.GetExtension(q.ImageURL)}";
+            //    q.ImageURL = newFileName;
+            //});
             return View(db.Persons.ToList());
         }
 
@@ -86,15 +86,12 @@ namespace AzureKickStart.Controllers
                 if (file != null && file.ContentLength > 0)
                 {
                     string containerName = "profile-images";
-                    string _FileName = string.Format("{0}_{1}_{2}", peron.ID.ToString(), Guid.NewGuid(), Path.GetFileName(file.FileName));
-                    // filename : "2_C44EC313-0E7F-49B7-93E3-B26C90B13E71_myImage.jpg"
+                    string _FileName = string.Format("original/{0}_{1}_{2}", peron.ID.ToString(), Guid.NewGuid(), Path.GetFileName(file.FileName));
+                    // filename : "original/2_C44EC313-0E7F-49B7-93E3-B26C90B13E71_myImage.jpg"
 
                     string fileURL = await storageService.UploadImageToAzureBlobStorageAsync(containerName, _FileName, ConvertToBytes(file), file.ContentType);
                     person.ImageURL = fileURL;
                     db.SaveChanges();
-
-                    ResizeImageQueueRequest resizeImageQueueRequest = new ResizeImageQueueRequest() { ContainerName = containerName, FileName = _FileName };
-                    await queueService.InsertMessage("resizeimagequeue", resizeImageQueueRequest);
                 }
 
                 return RedirectToAction("Index");

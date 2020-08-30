@@ -32,7 +32,9 @@
         @Html.DisplayFor(modelItem => item.BirthDate)
     </td>
     <td>
-        <img class="img-thumbnail img-small" src="@item.ImageURL" alt="@item.FullName">
+        <img class="img-thumbnail" src="@item.ImageURL" alt="@item.FullName">
+
+        <img class="img-thumbnail" src="@item.ImageURL.Replace("profile-images/original/", "profile-images/thumbnails/")" alt="@item.FullName">
     </td>
     <td>
         @*@Html.ActionLink("Edit", "Edit", new { id=item.ID }) |*@

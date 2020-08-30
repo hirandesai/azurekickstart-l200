@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.IO;
 
 namespace AzureKickStart.Common
 {
@@ -35,6 +36,33 @@ namespace AzureKickStart.Common
             }
 
             return destImage;
+        }
+
+        public static Image GetImageFromByteArray(byte[] fileContent)
+        {
+            using (var ms = new MemoryStream(fileContent))
+            {
+                return Image.FromStream(ms);
+            }
+        }
+
+        public static byte[] ResizeImage(ImageResizer imageResizer, int width, int height, ImageFormat format)
+        {
+            var resizedImage = imageResizer.ResizeImage(width, height);
+            using (MemoryStream ms = new MemoryStream())
+            {
+                resizedImage.Save(ms, format);
+                return ms.ToArray();
+            }
+        }
+
+        public static byte[] ReadFully(Stream input)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                input.CopyTo(ms);
+                return ms.ToArray();
+            }
         }
     }
 }
